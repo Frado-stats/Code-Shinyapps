@@ -7,16 +7,16 @@ This repository contains a collection of interactive tools and applications deve
 The repository currently contains four integrated tools:
 
 ### 1. BayesApp
-An interactive application for Bayesian analysis. It provides a user interface for exploring Bayesian methods and results.
+An interactive application that illustrates that sensitivity and specificity might vary across pre-test probabilities.
 
 ### 2. UtilityApp
-An interactive utility tool that brings together calculations and functionality in a Shiny-based interface.
+An interactive application that estimates the clinical usefulness of additional testing, based on AUC or sensitivity/specificity in a user-defined context.
 
-### 3. Tool 3
-*Description coming soon.*
+### 3. MP_iNBApp
+An interactive application that estimates the potential value in terms of individualized Net Benefit of additional MammaPrint testing in addition to Breast PREDICT. It aims to assist in the discussion of testing decisions in general.
 
-### 4. Tool 4
-*Description coming soon.*
+### 4. iNBApp
+An interactive application that estimates the Net Benefit and individualized Net Benefit of two competing test in a user-defined context.
 
 ## Accessing the Apps
 
@@ -67,4 +67,8 @@ Each app folder contains the files needed to run its respective application.
 ## Development and Updates
 
 Applications are maintained in this repository using Git and GitHub. When updates are done they are subsequently updated to Posit Connect Cloud.
+
+## Disclaimer
+
+The applications in this repository are provided for informational, educational, and exploratory purposes only. It must not be used to support decision making, provide conclusive evidence of usefulness or to provide medical or diagnostic services. Although care has been taken in their development, no guarantee is made regarding the accuracy, completeness, reliability, or suitability of the results.
 
