@@ -13,7 +13,7 @@ An interactive application that illustrates that sensitivity and specificity mig
 An interactive application that estimates the clinical usefulness of additional testing, based on AUC or sensitivity/specificity in a user-defined context.
 
 ### 3. MP_iNBApp
-An interactive application that estimates the potential value in terms of individualized Net Benefit of additional MammaPrint testing in addition to Breast PREDICT. It aims to assist in the discussion of testing decisions in general.
+An interactive application that estimates the potential value in terms of individualized Net Benefit of additional MammaPrint testing in addition to Breast PREDICT. It aims to provoke the discussion of testing decisions in general.
 
 ### 4. iNBApp
 An interactive application that estimates the Net Benefit and individualized Net Benefit of two competing test in a user-defined context.
