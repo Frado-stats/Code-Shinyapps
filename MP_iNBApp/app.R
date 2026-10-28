@@ -1,6 +1,11 @@
 library(shiny)
 library(tidyverse)
 
+# Original Breast PREDICT code from:
+# https://github.com/WintonCentre/predictv30r/blob/master/R/benefits32.R
+# Adapted to include the MammaPrint assuming: HR = 2.1 (From MINDACT)
+# Correlation with clinical risk 0.45 (Practical approximation based on synthetic MINDACT cohort)
+
 predict3.1_addMP <- function(year=2010, age=69, screen=0.204, size=11, grade=2, nodes=15,
                              er=0, her2=NA, ki67=0, pr=0, mp=2, probmppos = 0, ######## here mp and probmppos are added
                              horm=0, traz=1, bis=0, radio=1, heart.gy=0, gen=0,
@@ -457,30 +462,159 @@ ui <- fluidPage(
     "))
   ),
   
+  tags$head(
+    tags$style(HTML("
+    .disclaimer {
+      background-color: #fff8e1;
+      border-left: 4px solid #f9a825;
+      padding: 10px 14px;
+      margin-top: 15px;
+      font-size: 0.85em;
+      color: #5f4b00;
+    }
+  "))
+  ),
+  
+  tags$head(
+    tags$style(HTML("
+    .result-box {
+      padding: 10px 14px;
+      margin-top: 15px;
+      font-size: 0.95em;
+      border-left: 4px solid;
+      border-radius: 3px;
+    }
+    .result-positive {
+      background-color: #e8f5e9;
+      border-left-color: #2e7d32;
+      color: #1b5e20;
+    }
+    .result-negative {
+      background-color: #fdecea;
+      border-left-color: #d32f2f;
+      color: #8e1c1c;
+    }
+  "))
+  ),
+  
   # ---- NEW HEADER (replaces titlePanel) ----
   tags$div(
     class = "app-header",
     
-    tags$h1("MammaPrint Decision Support Dashboard"),
+    tags$h1("MammaPrint's Additional Value Dashboard"),
     
-    tags$h4("Extension to Breast PREDICT to quantify the value of MammaPrint testing"),
+    tags$h4("Quantifying the value of additional MammaPrint testing (in terms of iNB) in adjuvant chemotherapy decisions, after clinical assessment with Breast PREDICT."), 
     
-    tags$p("Decision support tool only — it can be assistive but does not replace clinical judgement"),
+    tags$h4("Individualized Net Benefit (iNB) quantifies the expected improvement in patient outcomes through improved decision-making using additional tests."),
+    
+    tags$div(
+      class = "disclaimer",
+      tags$strong("Disclaimer: "),
+      "This tool is provided for educational and informational purposes only. ",
+      "It must not be used to dictate decisions in medical decision making as it does not replace clinical judgement,",
+      "or to provide medical or diagnostic services. Neither the authors nor the LUMC are responsible for any decisions", 
+      "related to the use of this tool."
+    ),
     
     tags$details(
-      tags$summary("Disclaimer and Technical details"),
+      style = "text-align: left; max-width: 800px; margin: 15px auto;",
+      tags$summary(
+        style = "cursor: pointer; font-weight: 600; text-align: center; list-style-position: inside;",
+        "Intended use"
+      ),
       
-      tags$p(
-        "This tool is an extension of Breast PREDICT and does not replace its use."
+      tags$div(
+        style = "padding-top: 10px;",
+        
+        tags$p(
+          "This tool is an extension of ",
+          tags$a("Breast PREDICT", href = "https://breast.v3.predict.cam/",
+                 target = "_blank", rel = "noopener noreferrer"),
+          ". Users are encouraged to first use Breast PREDICT for a complete clinical assessment and more information on survival."
+        ),
+        
+        tags$div(
+          tags$p("This tool shows:"),
+          tags$ol(
+            style = "display: table; width: fit-content; max-width: 700px;
+                 margin: 0 auto; padding-left: 1.5em; text-align: left;",
+            tags$li("The adjuvant chemotherapy benefit estimated by Breast PREDICT;"),
+            tags$li("The probability of a high-risk MammaPrint result;"),
+            tags$li("How a high-risk or low-risk MammaPrint result updates the initial Breast PREDICT estimate;"),
+            tags$li("The individualized net benefit (iNB) of MammaPrint, i.e., whether adding its prognostic information is expected to improve patient outcomes through improving the treatment decision.")
+          )
+        ),
+        
+        tags$p(
+          "This tool assumes a prognostic MammaPrint effect on breast cancer–specific mortality with a hazard ratio of 2.1, taken from the landmark MINDACT trial."
+        ),
+        tags$p(
+          "Rather than simply adding the coefficient, it corrects for the correlation between clinical risk and MammaPrint (correlation of 0.45). ",
+          "This results in a higher probability of a high-risk result with increasing clinical risk, as observed in MINDACT."
+        ),
+        tags$p(
+          "The way correlation is estimated can be modified in future versions to improve the individualized Net Benefit (iNB) calculation."
+        ),
+        tags$p(tags$strong(
+          "To reiterate: Contemporary treatment decisions might depend on other factors that extend beyond Breast PREDICT and MammaPrint. ",
+          "The iNB of MammaPrint should be seen as one piece of information in deciding whether to test. ",
+          "This is not meant to replace clinical judgement."
+        ))
+      )
+    ),
+    tags$details(
+      style = "text-align: left; max-width: 800px; margin: 15px auto;",
+      tags$summary(
+        style = "cursor: pointer; font-weight: 600; text-align: center; list-style-position: inside;",
+        "Mathematical details"
       ),
-      tags$p(
-        "It assumes that MammaPrint updates the breast cancer–specific mortality estimate from Breast PREDICT using a hazard ratio of 2.1."
-      ),
-      tags$p(
-        "The probability of a high-risk MammaPrint result is estimated based on a correlation of 0.45 with clinical risk characteristics."
-      ),
-      tags$p(
-        "These assumptions can be modified in future versions to improve individualized Net Bnefit estimates."
+      
+      withMathJax(
+        tags$div(
+          style = "padding-top: 10px;",
+          
+          tags$p(
+            "The individualized net benefit (iNB) asks for which patient profiles an additional test ",
+            "improves patient outcomes through better treatment decisions, taking patient preferences into account. ",
+            "It compares outcomes of treatment decisions informed by clinical information only versus ",
+            "clinical information plus MammaPrint."
+          ),
+          
+          tags$p(
+            "For a given decision, iNB equals the estimated benefit minus the patient-specific treatment ",
+            "threshold \\(t\\) when the patient is treated, and 0 when not treated (no benefits or harms are observed)."
+          ),
+          
+          tags$p("This rule is applied to three benefit estimates:"),
+          tags$ol(
+            tags$li("iNB based on Breast PREDICT;"),
+            tags$li("iNB for Breast PREDICT + high-risk MammaPrint;"),
+            tags$li("iNB for Breast PREDICT + low-risk MammaPrint.")
+          ),
+          
+          tags$p(
+            "The iNB in (1) is observed, because the decision to perform MammaPrint is made after the clinical ",
+            "risk assessment. Conditional on the clinical risk profile, we can estimate the probability of each ",
+            "MammaPrint result. We can therefore estimate (2) and (3) and weigh them by their probability. ",
+            "If treatment decisions improve, this weighted average exceeds the iNB in (1)."
+          ),
+          
+          tags$p(
+            "Formally, let \\(\\Delta(X_1)\\) be the absolute treatment benefit estimated by Breast PREDICT and ",
+            "\\(\\Delta(X_1, X_2)\\) the estimate by Breast PREDICT + MammaPrint. ",
+            "The iNB of the decision using only Breast PREDICT is:"
+          ),
+          "$$\\mathbb{E}\\left[\\Delta(X_1,X_2) - t \\mid X_1, \\Delta(X_1) > t\\right] \\times P\\left(\\Delta(X_1) > t \\mid X_1\\right)$$",
+          
+          tags$p("The iNB of the decision informed by Breast PREDICT + MammaPrint is:"),
+          "$$\\mathbb{E}\\left[\\Delta(X_1,X_2) - t \\mid X_1, \\Delta(X_1,X_2) > t\\right] \\times P\\left(\\Delta(X_1,X_2) > t \\mid X_1\\right)$$",
+          
+          tags$p(
+            "Subtracting the first from the second gives the iNB of MammaPrint. ",
+            "When this iNB is positive, patient outcomes are expected to improve by performing MammaPrint, ",
+            "because of better treatment decisions."
+          )
+        )
       )
     )
   ),
@@ -489,7 +623,7 @@ ui <- fluidPage(
     
     sidebarPanel(
       
-      h4("Patient characteristics in Breast PREDICT"),
+      h4("Patient characteristics, as in Breast PREDICT"),
       
       numericInput("age", "Age at diagnosis (25 to 85)", value = 51, min = 25, max = 85),
       
@@ -552,7 +686,7 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      h3(textOutput("decision")),
+      h3(uiOutput("decision")),
       hr(),
       
       div(
@@ -567,21 +701,21 @@ ui <- fluidPage(
         
         div(
           class = "panel-box",
-          h4("Probability high risk MammaPrint",
+          h4("Probability of a high risk MammaPrint result",
              class = "panel-title"),
           plotOutput("prob", height = "520px")
         ),
         
         div(
           class = "panel-box",
-          h4("Updating benefit with MammaPrint",
+          h4("How MammaPrint updates Breast PREDICT",
              class = "panel-title"),
           plotOutput("mp_plot", height = "520px")
         ),
         
         div(
           class = "panel-box",
-          h4("The iNB of adding MammaPrint",
+          h4("The expected iNB of performing MammaPrint",
              class = "panel-title"),
           plotOutput("delta", height = "520px")
         )
@@ -616,17 +750,23 @@ server <- function(input, output, session) {
   })
   
   # ---- decision label ----
-  output$decision <- renderText({
+  output$decision <- renderUI({
     
     r <- res()
-    inb_mp <- round(r[["inbmp"]]*100,2)
+    inb_mp <- round(r[["inbmp"]] * 100, 2)
     
     if (inb_mp > 0) {
-      paste0(
-        "Consider MammaPrint \u27A1 MammaPrint is expected to improve the treatment decision ",
-        "(Net survival Benefit (iNB) = ", round(inb_mp, 4),"%)")
+      tags$div(
+        class = "result-box result-positive",
+        tags$strong("MammaPrint is expected to affect the treatment decision "),
+        paste0("(Individualized Net Benefit (iNB) = ", inb_mp, "%)")
+      )
     } else {
-      "Consider not doing MammaPrint \u27A1 MammaPrint is not expected to improve the treatment decision (no gain in iNB)"
+      tags$div(
+        class = "result-box result-negative",
+        tags$strong("MammaPrint is not expected to affect the treatment decision "),
+        "(no gain in iNB)"
+      )
     }
   })
   
